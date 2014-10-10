@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<!-- plugin.xml file written by dynaTrace Client 6.0.0 -->
+<plugin>
+  <extension point="com.dynatrace.diagnostics.pdk.pluginconfig" id="com.compuware.splunkforwarder" name="Splunk Data Forwarder">
+    <information>
+      <category value="" />
+      <displayname value="Splunk Data Forwarder" />
+      <description value="Pulls data using the Dynatrace REST interface and sends it to a Splunk server.&#x9;" />
+      <supportlevel value="unsupported" />
+    </information>
+    <configuration>
+      <property key="SplunkUsername" label="SplunkUsername" type="string" description="The user name used to log into the Splunk server" default="admin" multiline="false" />
+      <property key="SplunkPassword" label="SplunkPassword" type="password" description="Password that coincides with the Splunk user name" default="password" />
+      <property key="SplunkPort" label="SplunkPort" type="string" description="Port used to access Splunk server. Default is 8089" default="8089" multiline="false" />
+      <property key="SplunkServerAddress" label="SplunkServerAddress" type="string" description="Address that the Splunk server is hosted at. Default is localhost" default="localhost" multiline="false" />
+      <property key="SplunkHost" label="SplunkHost" type="string" description="Define the host that the imported data in Splunk is labeled under" default="Dynatrace" multiline="false" />
+      <property key="SplunkIndex" label="SplunkIndex" type="string" description="Set the index the data is stored under. Default is main" default="main" multiline="false" />
+      <property key="DTUser" label="DTUser" type="string" description="The username that is used to sign into the Dynatrace server" default="admin" multiline="false" />
+      <property key="DTPassword" label="DTPassword" type="password" description="Password to the assigned Dynatrace user account" default="admin" />
+      <property key="DTDashboard" label="DTDashboard" type="string" description="Name of the dashboard that will be sent to Splunk" default="easyTravel Purepaths" multiline="false" />
+      <property key="DTAddress" label="DTAddress" type="string" description="Address of dynaTrace server. Default is localhost" default="localhost" multiline="false" />
+    </configuration>
+  </extension>
+  <extension point="com.dynatrace.diagnostics.pdk.task" id="com.compuware.splunkforwarder.task" name="Splunk Data Forward">
+    <plugin configid="com.compuware.splunkforwarder" class="com.compuware.SplunkForwarder" />
+  </extension>
+</plugin>
+

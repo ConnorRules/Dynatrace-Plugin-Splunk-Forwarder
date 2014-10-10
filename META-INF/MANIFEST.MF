@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Require-Bundle: com.dynatrace.diagnostics.sdk
+Bundle-Vendor: Compuware
+Bundle-ClassPath: .,lib/commons-cli-1.2.jar,lib/gson-2.2.4.jar,lib/jac
+ ocoant.jar,lib/junit-4.11.jar,lib/opencsv-2.3.jar,lib/org-openide-act
+ ions.jar,lib/org-openide-awt.jar,lib/org-openide-compat.jar,lib/org-o
+ penide-dialogs.jar,lib/org-openide-execution.jar,lib/org-openide-expl
+ orer.jar,lib/org-openide-filesystems.jar,lib/org-openide-io.jar,lib/o
+ rg-openide-loaders.jar,lib/org-openide-modules.jar,lib/org-openide-no
+ des.jar,lib/org-openide-options.jar,lib/org-openide-text.jar,lib/org-
+ openide-util-enumerations.jar,lib/org-openide-util-lookup.jar,lib/org
+ -openide-util.jar,lib/org-openide-windows.jar
+Bundle-Version: 1.0.0
+Bundle-Name: Splunk Data Forwarder
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: com.compuware.splunkforwarder;singleton:=true
+
