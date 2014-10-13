@@ -266,10 +266,20 @@ public class SplunkForwarder implements Task {
  
 			//Get the system profile for later use
 			String SystemProfile = "Temporary";
-
+			NodeList nList = doc.getElementsByTagName("source");
+			for (int temp = 0; temp < nList.getLength(); temp++) {
+				NamedNodeMap m = nList.item(temp).getAttributes();
+				for (int i = 0; i < m.getLength(); i++) {
+					if(m.item(i).getNodeName() == "name")
+					{
+						SystemProfile = m.item(i).getNodeValue();
+					}
+				}
+			}
+			
 			
 			//Get all the purepaths
-			NodeList nList = doc.getElementsByTagName("purepath");
+			nList = doc.getElementsByTagName("purepath");
 			int count = 0;
 			
 			Map<String, String> TempDict = new HashMap<String, String>();
