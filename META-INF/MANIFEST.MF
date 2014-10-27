@@ -10,7 +10,7 @@ Bundle-ClassPath: .,lib/commons-cli-1.2.jar,lib/gson-2.2.4.jar,lib/jac
  des.jar,lib/org-openide-options.jar,lib/org-openide-text.jar,lib/org-
  openide-util-enumerations.jar,lib/org-openide-util-lookup.jar,lib/org
  -openide-util.jar,lib/org-openide-windows.jar
-Bundle-Version: 1.0.0
+Bundle-Version: 1.0.2
 Bundle-Name: Splunk Data Forwarder
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: com.compuware.splunkforwarder;singleton:=true

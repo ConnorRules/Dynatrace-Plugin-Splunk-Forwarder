@@ -91,29 +91,36 @@ public class SplunkForwarder implements Task {
 	@Override
 	public Status execute(TaskEnvironment env) throws Exception {
 
+		File file = null;
 		try{
-			 // Create a map of arguments and add login parameters
-	        ServiceArgs loginArgs = new ServiceArgs();
-	        loginArgs.setUsername(env.getConfigString("SplunkUsername"));
-	        loginArgs.setPassword(env.getConfigPassword("SplunkPassword"));
-	        loginArgs.setHost(env.getConfigString("SplunkServerAddress"));
-	        loginArgs.setPort(Integer.parseInt(env.getConfigString("SplunkPort")));
-	        
-	        // Create a Service instance and log in with the argument map
-	        service = Service.connect(loginArgs);
-	        log.info("Connected to Splunk Server Successfully");
-	        log.info("Token: " + service.getToken());
-			}
-	        catch (Exception e){
-	        	log.info("Error trying to connect to Splunk server: " + e.getMessage());
-	        	return new Status(Status.StatusCode.ErrorTargetService);
-	        }
-		
-		
 		//Saves the dashboard xml to file 
-        File file = SaveURLToFile(env);
+        file = SaveURLToFile(env);
         if(file==null) return new Status(Status.StatusCode.ErrorDynatraceServer);
+		}
+		catch (Exception e) {
+			log.info("Error loading dynatrace dasbhoard xml: " + e.getMessage());
+			return new Status(Status.StatusCode.ErrorInternal);
+		}
         
+        try{
+		 // Create a map of arguments and add login parameters
+        ServiceArgs loginArgs = new ServiceArgs();
+        loginArgs.setUsername(env.getConfigString("SplunkUsername"));
+        loginArgs.setPassword(env.getConfigPassword("SplunkPassword"));
+        loginArgs.setHost(env.getConfigString("SplunkServerAddress"));
+        loginArgs.setPort(Integer.parseInt(env.getConfigString("SplunkPort")));
+        
+        // Create a Service instance and log in with the argument map
+        service = Service.connect(loginArgs);
+        log.info("Connected to Splunk Server Successfully");
+        log.info("Token: " + service.getToken());
+		}
+        catch (Exception e){
+        	log.info("Error trying to connect to Splunk server: " + e.getMessage());
+        	return new Status(Status.StatusCode.ErrorTargetService);
+        }
+	
+		
         //Get the writer for the send statements
         Writer out = GetSplunkOutputStream(env);
         if(out==null) return new Status(Status.StatusCode.ErrorTargetService);
@@ -122,7 +129,9 @@ public class SplunkForwarder implements Task {
         ParseXML(env, file, out);
         
         
+        //Essentially the Teardown function.
         out.close();
+        file.delete();
 		
 		return new Status(Status.StatusCode.Success);
 	}
@@ -168,6 +177,7 @@ public class SplunkForwarder implements Task {
 	@Override
 	public void teardown(TaskEnvironment env) throws Exception {
 		// TODO
+		service.logout();
 	}
 	
 	
@@ -311,8 +321,11 @@ public class SplunkForwarder implements Task {
 						TempDict.put(m.item(i).getNodeName(), m.item(i).getNodeValue());
 					}
 					
-				}			
-				SendToSplunk(env, out, CreateJsonMessage(TempDict));
+				}
+				if(!SendToSplunk(env, out, CreateJsonMessage(TempDict))){
+					out = GetSplunkOutputStream(env);
+					SendToSplunk(env, out, CreateJsonMessage(TempDict));
+				}
 				count++;
 			}
 			log.info("Sent " + count + " purepath events to Splunk");
@@ -354,12 +367,18 @@ public class SplunkForwarder implements Task {
 					}	
 				}	
 				
-				SendToSplunk(env, out, CreateJsonMessage(TempDict));
+				if(!SendToSplunk(env, out, CreateJsonMessage(TempDict))){
+					out = GetSplunkOutputStream(env);
+					SendToSplunk(env, out, CreateJsonMessage(TempDict));
+				}
 				count++;
 			}
 			log.info("Sent " + count + " measurement events to Splunk");
 			count = 0;
 			
+			
+// These last sections are duplicates of each other. They could be merged into one, but for simplicities sake
+// they are being kept apart
 			//This section is parsing for Methods dashlets
 			//Error
 			nList = doc.getElementsByTagName("method");
@@ -377,7 +396,10 @@ public class SplunkForwarder implements Task {
 				}
 				
 				
-				SendToSplunk(env, out, CreateJsonMessage(TempDict));
+				if(!SendToSplunk(env, out, CreateJsonMessage(TempDict))){
+					out = GetSplunkOutputStream(env);
+					SendToSplunk(env, out, CreateJsonMessage(TempDict));
+				}
 				count++;
 			}
 			log.info("Sent " + count + " method events to Splunk");
@@ -400,11 +422,90 @@ public class SplunkForwarder implements Task {
 				}
 				
 				
-				SendToSplunk(env, out, CreateJsonMessage(TempDict));
+				if(!SendToSplunk(env, out, CreateJsonMessage(TempDict))){
+					out = GetSplunkOutputStream(env);
+					SendToSplunk(env, out, CreateJsonMessage(TempDict));
+				}
 				count++;
 			}
 			log.info("Sent " + count + " error events to Splunk");
 			count = 0;		
+			
+			//This section is parsing for Exception dashlets
+			nList = doc.getElementsByTagName("exception");
+			for (int temp = 0; temp < nList.getLength(); temp++) {
+				TempDict.clear();
+				Date d = new Date();
+				TempDict.put("DataType", "ExceptionData");
+				TempDict.put("time", d.toString());
+				TempDict.put("System Profile", SystemProfile);
+				
+				NamedNodeMap m = nList.item(temp).getAttributes();
+				for (int i = 0; i < m.getLength(); i++) {
+
+					TempDict.put(m.item(i).getNodeName(), m.item(i).getNodeValue());
+				}
+				
+				
+				if(!SendToSplunk(env, out, CreateJsonMessage(TempDict))){
+					out = GetSplunkOutputStream(env);
+					SendToSplunk(env, out, CreateJsonMessage(TempDict));
+				}
+				count++;
+			}
+			log.info("Sent " + count + " exception events to Splunk");
+			count = 0;		
+			
+			//This section is parsing for Tagged Web request dashlets
+			nList = doc.getElementsByTagName("taggedwebrequest");
+			for (int temp = 0; temp < nList.getLength(); temp++) {
+				TempDict.clear();
+				Date d = new Date();
+				TempDict.put("DataType", "TaggedRequestData");
+				TempDict.put("time", d.toString());
+				TempDict.put("System Profile", SystemProfile);
+				
+				NamedNodeMap m = nList.item(temp).getAttributes();
+				for (int i = 0; i < m.getLength(); i++) {
+
+					TempDict.put(m.item(i).getNodeName(), m.item(i).getNodeValue());
+				}
+				
+				
+				if(!SendToSplunk(env, out, CreateJsonMessage(TempDict))){
+					out = GetSplunkOutputStream(env);
+					SendToSplunk(env, out, CreateJsonMessage(TempDict));
+				}
+				count++;
+			}
+			log.info("Sent " + count + " tagged web request events to Splunk");
+			count = 0;
+			
+			//This section is parsing for Tagged Web request dashlets
+			nList = doc.getElementsByTagName("webrequest");
+			for (int temp = 0; temp < nList.getLength(); temp++) {
+				TempDict.clear();
+				Date d = new Date();
+				TempDict.put("DataType", "WebRequestData");
+				TempDict.put("time", d.toString());
+				TempDict.put("System Profile", SystemProfile);
+				
+				NamedNodeMap m = nList.item(temp).getAttributes();
+				for (int i = 0; i < m.getLength(); i++) {
+
+					TempDict.put(m.item(i).getNodeName(), m.item(i).getNodeValue());
+				}
+				
+				
+				if(!SendToSplunk(env, out, CreateJsonMessage(TempDict))){
+					out = GetSplunkOutputStream(env);
+					SendToSplunk(env, out, CreateJsonMessage(TempDict));
+				}
+				count++;
+			}
+			log.info("Sent " + count + " web request events to Splunk");
+			count = 0;
+			
 			
 ////////Done with parsing
 			
@@ -418,8 +519,23 @@ public class SplunkForwarder implements Task {
 	public String CreateJsonMessage(Map<String, String> Dict){
 		JSONObject json = new JSONObject();
 
+		String TimeStr = null;
+		//We need time to be the first value in the json message
 		for ( String key : Dict.keySet() ) {
-			json.put(key, Dict.get(key));
+			if(key == "time"){
+				json.put(key, Dict.get(key));
+				TimeStr = "{\"" + key + "\":\"" + Dict.get(key) + "\","; 
+			}
+			
+		}
+		
+		for ( String key : Dict.keySet() ) {
+			if(key != "time"){
+				json.put(key, Dict.get(key));
+			}
+		}
+		if(TimeStr != null){
+			return TimeStr + json.toString().replace("{", "");
 		}
 		
 		return json.toString();
