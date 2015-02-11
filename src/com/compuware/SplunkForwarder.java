@@ -283,16 +283,25 @@ public class SplunkForwarder implements Task {
  
 			//Get the system profile for later use
 			String SystemProfile = "Temporary";
-			NodeList nList = doc.getElementsByTagName("source");
-			for (int temp = 0; temp < nList.getLength(); temp++) {
-				NamedNodeMap m = nList.item(temp).getAttributes();
-				for (int i = 0; i < m.getLength(); i++) {
-					if(m.item(i).getNodeName() == "name")
-					{
-						SystemProfile = m.item(i).getNodeValue();
+			NodeList nList = null;
+			
+			if(env.getConfigString("SystemProfile").isEmpty()){
+				nList = doc.getElementsByTagName("source");
+				for (int temp = 0; temp < nList.getLength(); temp++) {
+					NamedNodeMap m = nList.item(temp).getAttributes();
+					for (int i = 0; i < m.getLength(); i++) {
+						if(m.item(i).getNodeName() == "name")
+						{
+							SystemProfile = m.item(i).getNodeValue();
+						}
 					}
 				}
 			}
+			else
+			{
+				SystemProfile = env.getConfigString("SystemProfile");
+			}
+
 			
 			
 //			This section contains parsing for purepaths.
@@ -328,7 +337,7 @@ public class SplunkForwarder implements Task {
 				}
 				count++;
 			}
-			log.info("Sent " + count + " purepath events to Splunk");
+			if(count > 0) log.info("Sent " + count + " purepath events to Splunk");
 			count = 0;
 			
 //			This section contains parsing for Chart data. This is difficult due to the tiered structure of the XML
@@ -373,7 +382,7 @@ public class SplunkForwarder implements Task {
 				}
 				count++;
 			}
-			log.info("Sent " + count + " measurement events to Splunk");
+			if(count > 0) log.info("Sent " + count + " measurement events to Splunk");
 			count = 0;
 			
 			
@@ -402,7 +411,7 @@ public class SplunkForwarder implements Task {
 				}
 				count++;
 			}
-			log.info("Sent " + count + " method events to Splunk");
+			if(count > 0) log.info("Sent " + count + " method events to Splunk");
 			count = 0;
 			
 			
@@ -428,7 +437,7 @@ public class SplunkForwarder implements Task {
 				}
 				count++;
 			}
-			log.info("Sent " + count + " error events to Splunk");
+			if(count > 0) log.info("Sent " + count + " error events to Splunk");
 			count = 0;		
 			
 			//This section is parsing for Exception dashlets
@@ -453,7 +462,7 @@ public class SplunkForwarder implements Task {
 				}
 				count++;
 			}
-			log.info("Sent " + count + " exception events to Splunk");
+			if(count > 0) log.info("Sent " + count + " exception events to Splunk");
 			count = 0;		
 			
 			//This section is parsing for Tagged Web request dashlets
@@ -478,7 +487,7 @@ public class SplunkForwarder implements Task {
 				}
 				count++;
 			}
-			log.info("Sent " + count + " tagged web request events to Splunk");
+			if(count > 0) log.info("Sent " + count + " tagged web request events to Splunk");
 			count = 0;
 			
 			//This section is parsing for Tagged Web request dashlets
@@ -503,7 +512,7 @@ public class SplunkForwarder implements Task {
 				}
 				count++;
 			}
-			log.info("Sent " + count + " web request events to Splunk");
+			if(count > 0) log.info("Sent " + count + " web request events to Splunk");
 			count = 0;
 			
 			
